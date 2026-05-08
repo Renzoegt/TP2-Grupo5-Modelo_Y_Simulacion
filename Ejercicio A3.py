@@ -24,3 +24,4 @@ def ejercicio_a3(numeros):
     plt.legend()
     plt.grid(True)
     plt.show()
+ejercicio_a3(numeros)
