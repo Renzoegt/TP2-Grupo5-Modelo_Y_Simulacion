@@ -1,0 +1,27 @@
+# Ejercicio A.3: Test Kolmogorov-Smirnov (K-S)
+
+def ejercicio_a3(numeros):
+    n = len(numeros)
+    estadistico_ks, p_valor = kstest(numeros, 'uniform')
+    valor_critico_ks = 1.36 / np.sqrt(n)
+    print("=== TEST KOLMOGOROV-SMIRNOV ===")
+    print(f"Estadístico D calculado: {estadistico_ks:.6f}")
+    print(f"Valor crítico (5%): {valor_critico_ks:.6f}")
+    print(f"p-valor: {p_valor:.6f}")
+    if estadistico_ks < valor_critico_ks:
+        print("Conclusión: NO se rechaza H0 -> los números parecen uniformes.")
+    else:
+        print("Conclusión: Se rechaza H0 -> los números NO parecen uniformes.")
+    numeros_ord = np.sort(numeros)
+    fda_empirica = np.arange(1, n + 1) / n
+    fda_teorica = numeros_ord
+    plt.figure(figsize=(8, 5))
+    plt.step(numeros_ord, fda_empirica, label='FDA Empírica (LCG)', color='steelblue', linewidth=1.2)
+    plt.plot(numeros_ord, fda_teorica, label='FDA Teórica U(0,1)', color='orange', linewidth=1.5, linestyle='--')
+    plt.title("Test K-S: FDA Empírica vs. FDA Teórica")
+    plt.xlabel("Valor")
+    plt.ylabel("Probabilidad acumulada")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+  
