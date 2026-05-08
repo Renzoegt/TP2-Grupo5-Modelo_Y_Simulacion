@@ -1,4 +1,4 @@
-# Ejercicio A.3: Test Kolmogorov-Smirnov (K-S)
+ #Ejercicio A.3: Test Kolmogorov-Smirnov (K-S)
 
 def ejercicio_a3(numeros):
     n = len(numeros)
@@ -24,4 +24,3 @@ def ejercicio_a3(numeros):
     plt.legend()
     plt.grid(True)
     plt.show()
-  
