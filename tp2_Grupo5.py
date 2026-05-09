@@ -385,4 +385,95 @@ print(f"• El KDE presenta un único pico predominante (~{mediana:.0f} ms) -> d
 print( "  sin evidencia de multimodalidad.")
 print( "• Conclusión: la forma observada (asimétrica positiva, unimodal, cola pesada a la derecha,")
 print( "  soporte estrictamente positivo) es compatible con una distribución Log-normal o Weibull.")
+print()
 
+
+# Ejercicio D.3: Ajuste de distribuciones teóricas (Log-normal y Weibull)
+
+# Estimación de parámetros por máxima verosimilitud con scipy.stats.fit()
+# Se fija loc=0 ya que la latencia no puede ser negativa (soporte en (0, +inf))
+
+# Distribución 1: Log-normal
+# scipy parametriza lognorm(s=sigma, scale=exp(mu)), con loc=0
+sigma_ln, loc_ln, scale_ln = stats.lognorm.fit(datos, floc=0)
+mu_ln = np.log(scale_ln)   # recuperamos mu a partir de scale = exp(mu)
+
+print("=== EJERCICIO D.3 - AJUSTE DE DISTRIBUCIONES ===")
+print("\nDistribución 1: Log-normal")
+print(f"  mu    (μ) = {mu_ln:.4f}")
+print(f"  sigma (σ) = {sigma_ln:.4f}")
+print(f"  (loc fijado en 0)")
+
+# Distribución 2: Weibull
+# scipy parametriza weibull_min(c=k, scale=lambda, loc=0)
+k_wb, loc_wb, scale_wb = stats.weibull_min.fit(datos, floc=0)
+
+print("\nDistribución 2: Weibull")
+print(f"  k      (forma)  = {k_wb:.4f}")
+print(f"  lambda (escala) = {scale_wb:.4f}")
+print(f"  (loc fijado en 0)")
+
+# Curva x para graficar ambas densidades teóricas
+x_curva = np.linspace(0, np.max(datos) + 200, 500)
+
+# Histogramas con curvas teóricas superpuestas
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# (1) Log-normal
+y_ln = stats.lognorm.pdf(x_curva, s=sigma_ln, loc=0, scale=scale_ln)
+axes[0].hist(datos, bins=k_sturges, density=True,
+             edgecolor='black', color='steelblue', alpha=0.7, label='Datos reales')
+axes[0].plot(x_curva, y_ln, color='red', linewidth=2,
+             label=f'Log-normal\nμ={mu_ln:.3f}, σ={sigma_ln:.3f}')
+axes[0].set_title("Histograma + Log-normal ajustada")
+axes[0].set_xlabel("Latencia (ms)")
+axes[0].set_ylabel("Densidad")
+axes[0].legend()
+axes[0].grid(True)
+
+# (2) Weibull
+y_wb = stats.weibull_min.pdf(x_curva, c=k_wb, loc=0, scale=scale_wb)
+axes[1].hist(datos, bins=k_sturges, density=True,
+             edgecolor='black', color='steelblue', alpha=0.7, label='Datos reales')
+axes[1].plot(x_curva, y_wb, color='green', linewidth=2,
+             label=f'Weibull\nk={k_wb:.3f}, λ={scale_wb:.0f}')
+axes[1].set_title("Histograma + Weibull ajustada")
+axes[1].set_xlabel("Latencia (ms)")
+axes[1].set_ylabel("Densidad")
+axes[1].legend()
+axes[1].grid(True)
+
+plt.suptitle("D.3 – Ajuste de distribuciones teóricas: Latencia de carga web", fontsize=13)
+plt.tight_layout()
+plt.show()
+
+# Gráficos Q-Q para ambas distribuciones
+fig2, axes2 = plt.subplots(1, 2, figsize=(12, 5))
+
+# Q-Q Log-normal: si X ~ LogNormal, entonces ln(X) ~ Normal
+ln_datos = np.log(datos)
+stats.probplot(ln_datos, dist="norm", plot=axes2[0])
+axes2[0].set_title("Q-Q Plot – Log-normal\n(ln(datos) vs Normal teórica)")
+axes2[0].grid(True)
+
+# Q-Q Weibull: usamos probplot con weibull_min y los parámetros ajustados
+(osm, osr), (slope, intercept, r) = stats.probplot(datos, dist=stats.weibull_min,
+                                                     sparams=(k_wb, 0, scale_wb))
+axes2[1].plot(osm, osr, 'o', color='steelblue', markersize=4, label='Datos')
+axes2[1].plot(osm, slope * np.array(osm) + intercept, 'r-', linewidth=2, label='Línea teórica')
+axes2[1].set_title("Q-Q Plot – Weibull")
+axes2[1].set_xlabel("Cuantiles teóricos")
+axes2[1].set_ylabel("Cuantiles observados")
+axes2[1].legend()
+axes2[1].grid(True)
+
+plt.suptitle("D.3 – Gráficos Q-Q: Log-normal vs Weibull", fontsize=13)
+plt.tight_layout()
+plt.show()
+
+# Resumen de parámetros estimados
+print(f"\n{'Distribución':<15} {'Parámetro 1':<25} {'Parámetro 2':<25}")
+print("-" * 65)
+print(f"{'Log-normal':<15} {'μ = ' + f'{mu_ln:.4f}':<25} {'σ = ' + f'{sigma_ln:.4f}':<25}")
+print(f"{'Weibull':<15} {'k = ' + f'{k_wb:.4f}':<25} {'λ = ' + f'{scale_wb:.4f}':<25}")
+print()
