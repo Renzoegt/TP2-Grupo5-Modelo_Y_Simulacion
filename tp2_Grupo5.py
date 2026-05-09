@@ -477,3 +477,62 @@ print("-" * 65)
 print(f"{'Log-normal':<15} {'μ = ' + f'{mu_ln:.4f}':<25} {'σ = ' + f'{sigma_ln:.4f}':<25}")
 print(f"{'Weibull':<15} {'k = ' + f'{k_wb:.4f}':<25} {'λ = ' + f'{scale_wb:.4f}':<25}")
 print()
+
+# Ejercicio D.4: Test K-S
+
+print("=== EJERCICIO D.4: TEST K-S ===")
+
+alpha = 0.05
+
+# Test K-S: Log-normal
+
+D_ln, p_ln = stats.kstest(
+    datos,
+    'lognorm',
+    args=(sigma_ln, 0, scale_ln)
+)
+
+print("\nTest K-S: Distribución Log-normal")
+print(f"Parámetros ajustados: μ = {mu_ln:.4f}, σ = {sigma_ln:.4f}")
+print(f"Estadístico D = {D_ln:.6f}")
+print(f"p-valor = {p_ln:.6f}")
+
+if p_ln >= alpha:
+    print("Conclusión: NO se rechaza H0.")
+    print("Los datos son compatibles con una distribución Log-normal.")
+else:
+    print("Conclusión: Se rechaza H0.")
+    print("Los datos NO son compatibles con una distribución Log-normal.")
+
+# Test K-S: Weibull
+
+D_wb, p_wb = stats.kstest(
+    datos,
+    'weibull_min',
+    args=(k_wb, 0, scale_wb)
+)
+
+print("\nTest K-S: Distribución Weibull")
+print(f"Parámetros ajustados: k = {k_wb:.4f}, λ = {scale_wb:.4f}")
+print(f"Estadístico D = {D_wb:.6f}")
+print(f"p-valor = {p_wb:.6f}")
+
+if p_wb >= alpha:
+    print("Conclusión: NO se rechaza H0.")
+    print("Los datos son compatibles con una distribución Weibull.")
+else:
+    print("Conclusión: Se rechaza H0.")
+    print("Los datos NO son compatibles con una distribución Weibull.")
+
+
+print("\n=== COMPARACIÓN ===")
+
+print(f"{'Distribución':<15} {'D':>12} {'p-valor':>12}")
+print("-" * 42)
+print(f"{'Log-normal':<15} {D_ln:>12.6f} {p_ln:>12.6f}")
+print(f"{'Weibull':<15} {D_wb:>12.6f} {p_wb:>12.6f}")
+
+if D_ln < D_wb:
+    print("\nLa distribución Log-normal presenta el mejor ajuste.")
+else:
+    print("\nLa distribución Weibull presenta el mejor ajuste.")
