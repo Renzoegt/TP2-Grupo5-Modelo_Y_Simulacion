@@ -1,7 +1,7 @@
 # Ejercicio B.1: Generador de Variables Exponencial(λ = 0.8)
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import kstest, expon
+from scipy.stats import kstest
 
 # Parámetros
 lam = 0.8          
