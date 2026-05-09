@@ -267,3 +267,122 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
+# Ejercicio D.2: Análisis exploratorio de datos reales (Tiempo de carga web)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Datos recolectados (80 mediciones de latencia de carga en ms) - Parte D.1
+datos = np.array([
+    285,  920, 1340, 1580,  410, 1820, 1450, 1120, 1680, 1240,
+   1390, 1250, 1180, 2840,  580,  720, 2190, 1490, 1620,  870,
+   1980, 1080, 1520, 1850, 1730,  920, 3420, 4180, 1290,  740,
+   1840, 2530,  980,  760, 1180, 1640,  890, 2950, 1290, 1080,
+   1190, 1120, 1480, 1320, 1750, 1230, 1390,  540,  920,  480,
+   1180,  720, 1490, 1390, 1820, 1670, 1280,  690, 1030, 1190,
+   1140, 1480, 1320, 1510, 1290, 2080, 2280, 1390, 1240, 2480,
+   1730, 4520, 1180, 1090, 1450, 1280, 1390, 2180, 1530,  320
+])
+
+n = len(datos)
+
+# === Estadísticos descriptivos ===
+media     = np.mean(datos)
+mediana   = np.median(datos)
+varianza  = np.var(datos, ddof=1)
+desvio    = np.std(datos, ddof=1)
+cv        = desvio / media * 100        # coeficiente de variación (%)
+minimo    = np.min(datos)
+maximo    = np.max(datos)
+rango     = maximo - minimo
+q1        = np.percentile(datos, 25)
+q3        = np.percentile(datos, 75)
+iqr       = q3 - q1
+asimetria = stats.skew(datos)
+curtosis  = stats.kurtosis(datos)        # exceso de curtosis (Fisher)
+
+# Moda: para datos cuasi-continuos, tomamos el valor más repetido
+valores, conteos = np.unique(datos, return_counts=True)
+moda       = valores[np.argmax(conteos)]
+moda_count = np.max(conteos)
+
+print("=== EJERCICIO D.2 - ANÁLISIS EXPLORATORIO ===")
+print(f"Fenómeno: Tiempo de carga (latencia) de páginas web - n = {n}")
+print(f"\n{'Estadístico':<32} {'Valor':>15}")
+print("-" * 49)
+print(f"{'Media':<32} {media:>12.2f} ms")
+print(f"{'Mediana':<32} {mediana:>12.2f} ms")
+print(f"{'Moda':<32} {moda:>12.2f} ms (frec={moda_count})")
+print(f"{'Varianza':<32} {varianza:>12.2f} ms²")
+print(f"{'Desvío estándar':<32} {desvio:>12.2f} ms")
+print(f"{'Coeficiente de variación':<32} {cv:>12.2f} %")
+print(f"{'Mínimo':<32} {minimo:>12.2f} ms")
+print(f"{'Máximo':<32} {maximo:>12.2f} ms")
+print(f"{'Rango':<32} {rango:>12.2f} ms")
+print(f"{'Q1 (percentil 25)':<32} {q1:>12.2f} ms")
+print(f"{'Q3 (percentil 75)':<32} {q3:>12.2f} ms")
+print(f"{'Rango intercuartílico (IQR)':<32} {iqr:>12.2f} ms")
+print(f"{'Asimetría (skewness)':<32} {asimetria:>12.4f}")
+print(f"{'Curtosis (exceso)':<32} {curtosis:>12.4f}")
+
+# === Número de clases por regla de Sturges ===
+k_sturges = int(np.ceil(1 + np.log2(n)))
+print(f"\nRegla de Sturges:  k = ⌈1 + log₂({n})⌉ = {k_sturges} clases")
+
+# === Histograma + Boxplot + KDE en una sola figura ===
+fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+
+# (1) Histograma
+axes[0].hist(datos, bins=k_sturges, edgecolor='black', color='steelblue', alpha=0.8)
+axes[0].axvline(media,   color='red',   linestyle='--', linewidth=1.5, label=f'Media = {media:.0f}')
+axes[0].axvline(mediana, color='green', linestyle='--', linewidth=1.5, label=f'Mediana = {mediana:.0f}')
+axes[0].set_title(f"Histograma (k = {k_sturges}, Sturges)")
+axes[0].set_xlabel("Latencia (ms)")
+axes[0].set_ylabel("Frecuencia")
+axes[0].legend()
+axes[0].grid(True)
+
+# (2) Boxplot
+axes[1].boxplot(datos, vert=True, patch_artist=True,
+                boxprops=dict(facecolor='lightblue', edgecolor='black'),
+                medianprops=dict(color='red', linewidth=2),
+                flierprops=dict(marker='o', markerfacecolor='red', markersize=6))
+axes[1].set_title("Diagrama de caja (Boxplot)")
+axes[1].set_ylabel("Latencia (ms)")
+axes[1].set_xticklabels([''])
+axes[1].grid(True)
+
+# (3) KDE - estimación de densidad
+kde   = stats.gaussian_kde(datos)
+x_kde = np.linspace(minimo - 200, maximo + 200, 500)
+y_kde = kde(x_kde)
+axes[2].plot(x_kde, y_kde, color='purple', linewidth=2, label='KDE')
+axes[2].fill_between(x_kde, y_kde, alpha=0.3, color='purple')
+axes[2].axvline(media,   color='red',   linestyle='--', linewidth=1.5, label=f'Media = {media:.0f}')
+axes[2].axvline(mediana, color='green', linestyle='--', linewidth=1.5, label=f'Mediana = {mediana:.0f}')
+axes[2].set_title("Estimación de densidad (KDE)")
+axes[2].set_xlabel("Latencia (ms)")
+axes[2].set_ylabel("Densidad")
+axes[2].legend()
+axes[2].grid(True)
+
+plt.suptitle("D.2 - Análisis exploratorio: Latencia de carga web", fontsize=13)
+plt.tight_layout()
+plt.show()
+
+# === Descripción de la forma observada ===
+print("\n=== DESCRIPCIÓN DE LA FORMA ===")
+print(f"• Media ({media:.2f}) > Mediana ({mediana:.2f}) -> asimetría positiva (cola a la derecha).")
+print(f"• Coeficiente de asimetría = {asimetria:.4f} > 0 -> confirma cola derecha pronunciada.")
+print(f"• Coeficiente de variación = {cv:.2f}% -> alta dispersión relativa, típica de tiempos generados")
+print( "  por composición multiplicativa de etapas (DNS + TCP + TLS + descarga).")
+print(f"• Curtosis (exceso) = {curtosis:.4f} -> "
+      f"{'leptocúrtica (colas pesadas)' if curtosis > 0 else 'platicúrtica (colas livianas)'}.")
+print(f"• El boxplot muestra outliers en el extremo superior (sitios muy lentos: AliExpress, Temu, Shein).")
+print(f"• El KDE presenta un único pico predominante (~{mediana:.0f} ms) -> distribución unimodal,")
+print( "  sin evidencia de multimodalidad.")
+print( "• Conclusión: la forma observada (asimétrica positiva, unimodal, cola pesada a la derecha,")
+print( "  soporte estrictamente positivo) es compatible con una distribución Log-normal o Weibull.")
+
