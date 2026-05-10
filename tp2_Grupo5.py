@@ -308,7 +308,8 @@ valores, conteos = np.unique(datos, return_counts=True)
 moda       = valores[np.argmax(conteos)]
 moda_count = np.max(conteos)
 
-print("=== EJERCICIO D.2 - ANÁLISIS EXPLORATORIO ===")
+print()
+print("=== ANÁLISIS EXPLORATORIO ===")
 print(f"Fenómeno: Tiempo de carga (latencia) de páginas web - n = {n}")
 print(f"\n{'Estadístico':<32} {'Valor':>15}")
 print("-" * 49)
@@ -398,7 +399,7 @@ print()
 sigma_ln, loc_ln, scale_ln = stats.lognorm.fit(datos, floc=0)
 mu_ln = np.log(scale_ln)   # recuperamos mu a partir de scale = exp(mu)
 
-print("=== EJERCICIO D.3 - AJUSTE DE DISTRIBUCIONES ===")
+print("=== AJUSTE DE DISTRIBUCIONES ===")
 print("\nDistribución 1: Log-normal")
 print(f"  mu    (μ) = {mu_ln:.4f}")
 print(f"  sigma (σ) = {sigma_ln:.4f}")
@@ -480,7 +481,7 @@ print()
 
 # Ejercicio D.4: Test K-S
 
-print("=== EJERCICIO D.4: TEST K-S ===")
+print("=== TEST K-S ===")
 
 alpha = 0.05
 
@@ -536,3 +537,94 @@ if D_ln < D_wb:
     print("\nLa distribución Log-normal presenta el mejor ajuste.")
 else:
     print("\nLa distribución Weibull presenta el mejor ajuste.")
+print()
+
+# Ejercicio D.5: Generación de muestra sintética y comparación con datos reales
+
+print("=== MUESTRA SINTÉTICA VS. DATOS REALES ===\n")
+
+# Generamos muestra sintética del mismo tamaño que los datos reales
+# usando la distribución Log-normal validada en D.4
+np.random.seed(42)
+datos_sinteticos = stats.lognorm.rvs(s=sigma_ln, loc=0, scale=scale_ln, size=n)
+
+# Función auxiliar para calcular estadísticos descriptivos
+def estadisticos(arr):
+    return {
+        'Media':    np.mean(arr),
+        'Mediana':  np.median(arr),
+        'Desvío':   np.std(arr, ddof=1),
+        'Varianza': np.var(arr, ddof=1),
+        'Mínimo':   np.min(arr),
+        'Máximo':   np.max(arr),
+        'Q1':       np.percentile(arr, 25),
+        'Q3':       np.percentile(arr, 75),
+        'IQR':      np.percentile(arr, 75) - np.percentile(arr, 25),
+        'CV (%)':   np.std(arr, ddof=1) / np.mean(arr) * 100,
+    }
+
+est_real = estadisticos(datos)
+est_sint = estadisticos(datos_sinteticos)
+
+# Tabla comparativa de estadísticos descriptivos
+print(f"{'Estadístico':<18} {'Real':>14} {'Sintético':>14} {'Dif. (%)':>12}")
+print("-" * 60)
+for key in est_real:
+    r = est_real[key]
+    s = est_sint[key]
+    if key not in ('Mínimo', 'Máximo') and r != 0:
+        dif = abs(r - s) / abs(r) * 100
+        print(f"{key:<18} {r:>14.2f} {s:>14.2f} {dif:>11.2f}%")
+    else:
+        print(f"{key:<18} {r:>14.2f} {s:>14.2f} {'—':>12}")
+
+# Histogramas superpuestos + Boxplot comparativo
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# (1) Histogramas superpuestos con curva teórica de referencia
+x_ref = np.linspace(0, max(np.max(datos), np.max(datos_sinteticos)) + 200, 500)
+y_ref = stats.lognorm.pdf(x_ref, s=sigma_ln, loc=0, scale=scale_ln)
+axes[0].hist(datos, bins=k_sturges, density=True,
+             alpha=0.6, color='steelblue', edgecolor='black', label='Datos reales')
+axes[0].hist(datos_sinteticos, bins=k_sturges, density=True,
+             alpha=0.6, color='orange', edgecolor='black', label='Datos sintéticos')
+axes[0].plot(x_ref, y_ref, 'r-', linewidth=2,
+             label=f'Log-normal\nμ={mu_ln:.3f}, σ={sigma_ln:.3f}')
+axes[0].set_title("D.5 – Histogramas superpuestos\nDatos reales vs. Sintéticos")
+axes[0].set_xlabel("Latencia (ms)")
+axes[0].set_ylabel("Densidad")
+axes[0].legend()
+axes[0].grid(True)
+
+# (2) Boxplot comparativo
+bp = axes[1].boxplot(
+    [datos, datos_sinteticos],
+    vert=True,
+    patch_artist=True,
+    tick_labels=['Datos reales', 'Datos sintéticos'],
+    boxprops=dict(facecolor='lightblue', edgecolor='black'),
+    medianprops=dict(color='red', linewidth=2),
+    flierprops=dict(marker='o', markerfacecolor='red', markersize=5)
+)
+bp['boxes'][1].set_facecolor('moccasin')
+axes[1].set_title("D.5 – Boxplot comparativo\nDatos reales vs. Sintéticos")
+axes[1].set_ylabel("Latencia (ms)")
+axes[1].grid(True)
+
+plt.suptitle("D.5 – Comparación: Datos reales vs. Muestra sintética Log-normal", fontsize=13)
+plt.tight_layout()
+plt.show()
+
+# Test K-S de dos muestras
+D_2samp, p_2samp = stats.ks_2samp(datos, datos_sinteticos)
+
+print(f"\nTest K-S de dos muestras (scipy.stats.ks_2samp)")
+print(f"  Estadístico D = {D_2samp:.6f}")
+print(f"  p-valor       = {p_2samp:.6f}")
+if p_2samp >= 0.05:
+    print("  Conclusión: NO se rechaza H0.")
+    print("  Las muestras son estadísticamente indistinguibles.")
+    print("  → El modelo Log-normal es válido para generar datos de simulación representativos.")
+else:
+    print("  Conclusión: Se RECHAZA H0.")
+    print("  Las dos muestras presentan diferencias estadísticamente significativas.")
