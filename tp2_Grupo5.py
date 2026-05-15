@@ -547,7 +547,9 @@ fig2, axes2 = plt.subplots(1, 2, figsize=(12, 5))
 # Q-Q Log-normal: si X ~ LogNormal, entonces ln(X) ~ Normal
 ln_datos = np.log(datos)
 stats.probplot(ln_datos, dist="norm", plot=axes2[0])
-axes2[0].set_title("Q-Q Plot – Log-normal\n(ln(datos) vs Normal teórica)")
+axes2[0].set_title("Q-Q Plot – Log-normal")
+axes2[0].set_xlabel("Cuantiles teóricos")
+axes2[0].set_ylabel("Cuantiles observados")
 axes2[0].grid(True)
 
 # Q-Q Weibull: usamos probplot con weibull_min y los parámetros ajustados
